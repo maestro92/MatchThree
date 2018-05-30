@@ -1,7 +1,7 @@
 #include "game_board_view.h"
 #include "global.h"
 
-void GameBoardView::init(int w, int h)
+void GameBoardView::init(GameBoard* gameBoard)
 {
 	/*
 	blueGem = utl::loadSDLImage("Assets/blue gem.jpg");
@@ -16,6 +16,9 @@ void GameBoardView::init(int w, int h)
 	float size = 1;
 	float spacing = 0.2;
 
+	int w = gameBoard->getWidth();
+	int h = gameBoard->getHeight();
+	
 	for (int y = 0; y < h; y++)
 	{
 		vector<WorldObject> row;
@@ -35,6 +38,17 @@ void GameBoardView::init(int w, int h)
 		curY += size + spacing;
 		gridCells.push_back(row);
 	}
+}
+
+
+WorldObject& GameBoardView::getWorldObject(int x, int y)
+{
+	return gridCells[y][x];
+}
+
+void GameBoardView::reset()
+{
+	gridCells.clear();
 }
 
 void GameBoardView::render(Pipeline& p, GameBoard* gameBoard)

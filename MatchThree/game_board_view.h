@@ -11,13 +11,16 @@
 class GameBoardView
 {
 	public:
-		void init(int w, int h);
+		void init(GameBoard* gameBoard);
 		void render(Pipeline& p, GameBoard* gameBoard);
 
-	private:
-		vector< vector<WorldObject> > gridCells;
-		Renderer*					p_renderer;
+		void reset();
 
+		WorldObject& getWorldObject(int x, int y);
+	private:
+
+		Renderer*					p_renderer;
+		vector< vector<WorldObject> > gridCells;
 		/*
 		GLuint blueGemTexture;
 		GLuint redGemTexture;

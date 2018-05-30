@@ -88,15 +88,15 @@ const float SPAWN_POSITION_UNIT_OFFSET = 40.0f;
 const int INVALID_OBJECT = 0x7FFFFFFF;
 
 
-ZillowClone::~ZillowClone()
+MatchThree::~MatchThree()
 {
 
 }
 
 
-void ZillowClone::init()
+void MatchThree::init()
 {
-	
+	frameNum = 0;
 
 	global.modelMgr = new ModelManager();
 	global.modelMgr->init();
@@ -120,7 +120,7 @@ void ZillowClone::init()
 	timeProfilerIndex = 0;
 	fpsProfilerIndex = 0;
 
-	initObjects();
+
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -157,69 +157,68 @@ void ZillowClone::init()
 	SDL_WM_SetCaption("MatchThree", NULL);
 
 
-	loadData = false;
+	loadData = true;
+
+	float scale = 100.0;
+	o_worldAxis.setScale(scale);
+	o_worldAxis.setModel(global.modelMgr->get(ModelEnum::xyzAxis));
+
 
 	if (loadData)
 	{
-
+		gameBoard.saveLatest = false;
+		gameBoard.load("board0.txt");
+		gameBoardView.init(&gameBoard);
+		debugDrawing();
 	}
 	else
 	{
+		gameBoard.saveLatest = true;
+		gameBoard.init(10, 12);
+		gameBoardView.init(&gameBoard);
+		debugDrawing();
 
 	}
 }
 
 GLuint tempTexture;
 
-void ZillowClone::initObjects()
+
+
+
+
+
+
+
+void MatchThree::debugDrawing()
 {
-	float scale = 100.0;
-	o_worldAxis.setScale(scale);
-	o_worldAxis.setModel(global.modelMgr->get(ModelEnum::xyzAxis));
+	m_gui.removeDebugLabels();
+	float size = 20;
+	//	float size = m_cameraZoom * 0.8;
+	//	float size = 300 / m_cameraZoom;
 
-	gameBoard.init(10, 10);
-	gameBoardView.init(10, 10);
-
-//	lineMarkers
-	
-	for (int i = -50; i <= 50; i += 10)
-//	for (int i = 0; i <= 50; i += 10)
+	for (int y = 0; y < gameBoard.getHeight(); y++)
 	{
-		WorldObject obj = WorldObject();
-		obj.setModel(global.modelMgr->get(ModelEnum::centeredQuad));
-		obj.setPosition(glm::vec3(i, 0, 0));
+		for (int x = 0; x < gameBoard.getWidth(); x++)
+		{
+			glm::vec3 pos = gameBoardView.getWorldObject(x, y).m_position;
+			glm::vec3 screenPos = worldToScreen(glm::vec3(pos.x, pos.y, 0));
+			glm::vec3 labelPos = screenToUISpace(glm::vec2(screenPos.x, screenPos.y));
 
-		obj.setScale(1);
+			string s = utl::intToStr(x) + " " + utl::intToStr(y);
 
-		lineMarkers.push_back(obj);
+			Label* coordLabel = new Label(s, labelPos.x + 20, labelPos.y, 0, 0, COLOR_WHITE);
+			coordLabel->setFont(size, COLOR_BLACK);
+			m_gui.addDebugLabel(coordLabel);
+		}
 	}
+}
 
 
-	
-	for (int i = -10; i <= 10; i += 10)
-//	for (int i = 0; i <= 10; i += 10)
 
-	{
-		WorldObject obj = WorldObject();
-		obj.setModel(global.modelMgr->get(ModelEnum::centeredQuad));
-		obj.setPosition(glm::vec3(i, 10, 0));
 
-		obj.setScale(1);
-
-		lineMarkers.push_back(obj);
-
-		
-		obj = WorldObject();
-		obj.setModel(global.modelMgr->get(ModelEnum::centeredQuad));
-		obj.setPosition(glm::vec3(i, -10, 0));
-
-		obj.setScale(1);
-
-		lineMarkers.push_back(obj);
-		
-	}
-	
-
+void MatchThree::initObjects()
+{
 
 
 }
@@ -237,14 +236,14 @@ responsiveness but requires more outgoing bandwidth, too.
 
 https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking
 */
-void ZillowClone::clientFrame(long long dt)
+void MatchThree::clientFrame(long long dt)
 {
 	render();	
 }
 
 
 
-void ZillowClone::GetTimeProfilerAverages()
+void MatchThree::GetTimeProfilerAverages()
 {
 	
 	long long total = 0;
@@ -271,7 +270,7 @@ void ZillowClone::GetTimeProfilerAverages()
 }
 
 
-void ZillowClone::start()
+void MatchThree::start()
 {
 	cout << "Start" << endl;
 
@@ -328,7 +327,7 @@ void ZillowClone::start()
 }
 
 
-int ZillowClone::getAverageFPS()
+int MatchThree::getAverageFPS()
 {
 	float averageFrameTime = 0;
 	for (int i = 0; i < FPS_PROFILER_BUFFER; i++)
@@ -352,7 +351,7 @@ int ZillowClone::getAverageFPS()
 }
 
 
-void ZillowClone::updateCamera()
+void MatchThree::updateCamera()
 {
 	m_pipeline.ortho(m_cameraCenter.x - m_cameraZoom, 
 					m_cameraCenter.x + m_cameraZoom,
@@ -379,7 +378,7 @@ void ZillowClone::updateCamera()
 
 
 
-glm::vec3 ZillowClone::screenToWorldPoint(glm::vec2 screenPoint)
+glm::vec3 MatchThree::screenToWorldPoint(glm::vec2 screenPoint)
 {
 	glm::vec4 viewPort = glm::vec4(0, 0, utl::SCREEN_WIDTH, utl::SCREEN_HEIGHT);
 	glm::vec3 temp = glm::vec3(screenPoint.x, screenPoint.y, 0);
@@ -389,7 +388,7 @@ glm::vec3 ZillowClone::screenToWorldPoint(glm::vec2 screenPoint)
 }
 
 
-glm::vec3 ZillowClone::screenToUISpace(glm::vec2 screenPoint)
+glm::vec3 MatchThree::screenToUISpace(glm::vec2 screenPoint)
 {
 	glm::vec4 viewPort = glm::vec4(0, 0, utl::SCREEN_WIDTH, utl::SCREEN_HEIGHT);
 	glm::vec3 temp = glm::vec3(screenPoint.x, screenPoint.y, 0);
@@ -400,7 +399,7 @@ glm::vec3 ZillowClone::screenToUISpace(glm::vec2 screenPoint)
 }
 
 
-glm::vec3 ZillowClone::worldToScreen(glm::vec3 pos)
+glm::vec3 MatchThree::worldToScreen(glm::vec3 pos)
 {
 	glm::vec4 viewPort = glm::vec4(0, 0, utl::SCREEN_WIDTH, utl::SCREEN_HEIGHT);
 //	glm::vec3 screenPos = glm::project(pos, glm::inverse(m_pipeline.getModelViewMatrix()), m_pipeline.getProjectionMatrix(), viewPort);
@@ -411,7 +410,7 @@ glm::vec3 ZillowClone::worldToScreen(glm::vec3 pos)
 
 
 
-void ZillowClone::update()
+void MatchThree::update()
 {
 	int mx, my;
 	SDL_GetMouseState(&mx, &my);
@@ -442,7 +441,7 @@ void ZillowClone::update()
 						break;
 
 					case SDLK_v:
-
+						gameBoard.findMatches();
 						break;
 
 					case SDLK_t:
@@ -551,7 +550,7 @@ combine points that can do a line fit
 */
 
 
-void ZillowClone::render()
+void MatchThree::render()
 {
 	// *******************************************************
 	// ************* Rendering *******************************
@@ -577,6 +576,11 @@ void ZillowClone::render()
 	glCullFace(GL_BACK);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
+
+	if (frameNum == 0)
+	{
+		gameBoard.debug();
+	}
 
 	gameBoardView.render(m_pipeline, &gameBoard);
 
@@ -610,10 +614,11 @@ void ZillowClone::render()
 	m_gui.updateAndRender(m_mouseState);
 
 	SDL_GL_SwapBuffers();
+	frameNum++;
 }
 
 
-long long ZillowClone::getCurrentTimeMillis()
+long long MatchThree::getCurrentTimeMillis()
 {
 #ifdef WIN32
 	return GetTickCount();
@@ -646,7 +651,7 @@ int main(int argc, char *argv[])
 	utl::initSDL(utl::SCREEN_WIDTH, utl::SCREEN_HEIGHT, pDisplaySurface);
 	utl::initGLEW();
 
-	ZillowClone Martin;
+	MatchThree Martin;
 
 
 	Martin.init();
@@ -665,7 +670,7 @@ int main(int argc, char *argv[])
 }
 
 
-int ZillowClone::endWithError(char* msg, int error)
+int MatchThree::endWithError(char* msg, int error)
 {
 	//Display error message in console
 	cout << msg << "\n";
@@ -678,7 +683,7 @@ int ZillowClone::endWithError(char* msg, int error)
 
 
 
-void ZillowClone::initGUI()
+void MatchThree::initGUI()
 {
 	// run this before m_gui.init, so the textEngine is initialized
 	// need to comeback and re-organize the gui the minimize dependencies
@@ -687,7 +692,7 @@ void ZillowClone::initGUI()
 }
 
 
-void ZillowClone::renderGUI()
+void MatchThree::renderGUI()
 {
 
 	m_gui.initGUIRenderingSetup();

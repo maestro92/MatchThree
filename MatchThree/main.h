@@ -86,7 +86,7 @@ const int FPS_PROFILER_BUFFER = 20;
 
 
 
-class ZillowClone
+class MatchThree
 {
 	public:
 		Renderer*					p_renderer;
@@ -123,7 +123,7 @@ class ZillowClone
 	
 		GUIManager m_gui;
 		bool loadData;
-
+		int frameNum;
 		float m_zoom;
 		float m_range;
 	public:
@@ -136,9 +136,9 @@ class ZillowClone
 		int fpsProfilerIndex;
 		int fpsProfiler[FPS_PROFILER_BUFFER];
 
-	
+		void debugDrawing();
 
-		~ZillowClone();
+		~MatchThree();
 
 		/// init functions
 		void init();
