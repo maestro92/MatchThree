@@ -11,6 +11,8 @@ GameBoard::GameBoard()
 
 	m_horiDirsToExamine.push_back(glm::vec2(1, 0));
 	m_horiDirsToExamine.push_back(glm::vec2(-1, 0));
+//	m_horiDirsToExamine.push_back(glm::vec2(0, 1));
+//	m_horiDirsToExamine.push_back(glm::vec2(0, -1));
 
 	m_vertDirsToExamine.push_back(glm::vec2(0, 1));
 	m_vertDirsToExamine.push_back(glm::vec2(0, -1));
@@ -24,7 +26,8 @@ void GameBoard::init(int w, int h)
 		board.push_back(row);
 
 		vector<VisitedFlags> visitedRow(w);
-		visited.push_back(visitedRow);
+		horiVisited.push_back(visitedRow);
+		vertVisited.push_back(visitedRow);
 		
 		vector<bool> vertRow(w);
 		vector<bool> horiRow(w);
@@ -38,7 +41,8 @@ void GameBoard::init(int w, int h)
 		for (int x = 0; x < w; x++)
 		{
 			board[y][x] = static_cast<GameBoard::Gem>((utl::randInt(0, (int)(Gem::NUM_TYPES))));
-			visited[y][x] = VisitedFlags((int)Gem::NUM_TYPES);
+			horiVisited[y][x] = VisitedFlags((int)Gem::NUM_TYPES);
+			vertVisited[y][x] = VisitedFlags((int)Gem::NUM_TYPES);
 		}
 	}
 
@@ -53,6 +57,7 @@ void GameBoard::init(int w, int h)
 
 void GameBoard::debugConnectedSequences()
 {
+	cout << "Printing horizontal sequences" << endl;
 	for (int y = 0; y < m_horiConnectedSequences.size(); y++)
 	{
 		for (int x = 0; x < m_horiConnectedSequences[y].size(); x++)
@@ -61,6 +66,17 @@ void GameBoard::debugConnectedSequences()
 		}
 		cout << endl;
 	}
+
+	cout << "Printing vertical sequences" << endl;
+	for (int y = 0; y < m_vertConnectedSequences.size(); y++)
+	{
+		for (int x = 0; x < m_vertConnectedSequences[y].size(); x++)
+		{
+			cout << m_vertConnectedSequences[y][x].x << " " << m_vertConnectedSequences[y][x].y << ", ";
+		}
+		cout << endl;
+	}
+
 }
 
 void GameBoard::findMatches()
@@ -68,68 +84,33 @@ void GameBoard::findMatches()
 	resetFlags();
 
 	m_horiConnectedSequences.clear();
-
+	m_vertConnectedSequences.clear();
 	for (int y = 0; y < getHeight(); y++)
 	{
 		for (int x = 0; x < getWidth(); x++)
 		{
 			glm::vec2 src(x, y);
-			if (CanStartHoriTraverseFrom(src))
+			if (CanStartHoriTraverseFrom(src) )
 			{
 				vector<glm::vec2> curTraversal;
-
-
-				if (x == 4 && y == 0)
-				{
-					cout << "4 0 is " << (int)(board[y][x]) << endl;
-					int a = 1;
-				
-					cout << "5 0 is " << (int)(board[y][x+1]) << endl;
-					a = 1;
-
-				}
-
 				traverseHoriFromThisCell(src, curTraversal);
-
-
-
-				// sort curTraversal
-			//	sort(curTraversal.begin(), curTraversal.end(), horiSeqComparator());
-
-
-				if (x == 4 && y == 0)
-				{
-					cout << "size is " << curTraversal.size() << endl;
-					int a = 1;
-				}
 
 				if (curTraversal.size() > 1)
 				{
 					m_horiConnectedSequences.push_back(curTraversal);
-
-					if (src.x == 4 && src.y == 0)
-					{
-						for (int i = 0; i < curTraversal.size(); i++)
-						{
-							cout << curTraversal[i].x << " " << curTraversal[i].y << ", ";
-						}
-						cout << endl;
-					}
-
 				}
 			}
 
-			/*
 			if (CanStartVertTraverseFrom(src))
 			{
 				vector<glm::vec2> curTraversal;
 				traverseVertFromThisCell(src, curTraversal);
 
-				// sort curTraversal
-				sort(curTraversal.begin(), curTraversal.end(), vertSeqComparator);
-				m_vertConnectedSequences.push_back(curTraversal);
-			}
-			*/
+				if (curTraversal.size() > 1)
+				{
+					m_vertConnectedSequences.push_back(curTraversal);
+				}
+			}			
 		}
 	}
 
@@ -137,7 +118,203 @@ void GameBoard::findMatches()
 }
 
 
+void GameBoard::findPotentialMatches()
+{
+	// the idea is taken from this link https://dgkanatsios.com/2015/02/25/building-a-match-3-game-in-unity-3/
+	// he is doing a check starting from every grid
 
+	// in my case, if I have already ran findMatches, that means I already have the list of connected Sequence
+	// in that case, I just need to loop through the connected sequence and check for potential matches instead of iterating
+	// thru every cell
+
+	findPotentialHoriMatches();
+	findPotentialVertMatches();
+}
+
+
+
+vector<vector<glm::vec2>> GameBoard::findPotentialHoriMatches()
+{
+	for (int i = 0; i < m_horiConnectedSequences.size(); i++)
+	{
+		// this is assuming horiConnectedSeq goes from small x to large x
+		vector<glm::vec2> seq = m_horiConnectedSequences[i];
+
+		findPotMatchHori0(seq);
+		findPotMatchHori1(seq);
+		findPotMatchHori2(seq);
+	}
+
+	for (int i = 0; i < m_vertConnectedSequences.size(); i++)
+	{
+		// this is assuming horiConnectedSeq goes from small x to large x
+		vector<glm::vec2> seq = m_vertConnectedSequences[i];
+
+		findPotMatchVert0(seq);
+		findPotMatchVert1(seq);
+		findPotMatchVert2(seq);
+	}
+
+}
+
+vector<vector<glm::vec2>> GameBoard::findPotentialVertMatches()
+{
+
+}
+
+
+vector<glm::vec2> buildPotMatchSeq(glm::vec2 move, vector<glm::vec2> seq, bool addToFront)
+{
+	vector<glm::vec2> pot;
+	if (addToFront)
+	{
+		pot.push_back(move);
+	}
+
+	for (int i = 0; i < seq.size(); i++)
+	{
+		pot.push_back(seq[i]);
+	}
+
+	if (addToFront == false)
+	{
+		pot.push_back(move);
+	}
+
+	return pot;
+}
+
+void GameBoard::findPotMatchHori0(vector<glm::vec2> seq)
+{
+	// https://github.com/dgkanatsios/MatchThreeGame/blob/master/Assets/Scripts/Utilities.cs
+	/* example *\
+	* * * * *
+	* * * * *
+	* * * * *
+	* & & * *
+	& * * * *
+	\* example  */
+
+	glm::vec2 coord0 = seq[0];
+	glm::vec2 coord1(coord0.x - 1, coord0.y - 1);
+
+	if (IsValidRange(coord1))
+	{		
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
+
+
+	/* example *\
+	* * * * *
+	* * * * *
+	& * * * *
+	* & & * *
+	* * * * *
+	\* example  */
+
+	glm::vec2 coord2(coord0.x - 1, coord0.y + 1);
+	if (IsValidRange(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
+}
+
+void GameBoard::findPotMatchHori1(vector<glm::vec2> seq)
+{
+	/* example *\
+	* * * * *
+	* * * * *
+	* * * * *
+	* & & * *
+	* * * & *
+	\* example  */
+
+	glm::vec2 coord0 = seq[seq.size()-1];
+	glm::vec2 coord1(coord0.x + 1, coord0.y - 1);
+
+	if (IsValidRange(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
+
+
+	/* example *\
+	* * * * *
+	* * * * *
+	* * * & *
+	* & & * *
+	* * * * *
+	\* example  */
+
+	coord1 = glm::vec2(coord0.x + 1, coord0.y + 1);
+	if (IsValidRange(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
+}
+
+
+
+void GameBoard::findPotMatchHori2(vector<glm::vec2> seq)
+{
+	/* example *\
+	* * * * *
+	* * * * *
+	* * * * *
+	* & * & &
+	* * * * *
+	\* example  */
+
+	glm::vec2 coord0 = seq[0];
+	glm::vec2 coord1(coord0.x - 2, coord0.y);
+
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
+
+
+	/* example *\
+	* * * * *
+	* * * * *
+	* * * * *
+	* & & * &
+	* * * * *
+	\* example  */
+	coord0 = seq[seq.size() - 1];
+	coord1 = glm::vec2(coord0.x + 2, coord0.y);
+
+	if (IsValidRange(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
+}
+
+vector<glm::vec2> GameBoard::checkHori2(int x, int y)
+{
+
+}
+
+vector<glm::vec2> GameBoard::checkVert0(int x, int y)
+{
+
+}
+
+vector<glm::vec2> GameBoard::checkVert1(int x, int y)
+{
+
+}
+
+vector<glm::vec2> GameBoard::checkVert2(int x, int y)
+{
+
+}
 
 
 
@@ -145,12 +322,16 @@ void GameBoard::traverseHoriFromThisCell(glm::vec2 src, vector<glm::vec2>& curTr
 {
 	Gem gem = board[src.y][src.x];
 
-	visited[src.y][src.x].SetVisit(gem);
+
+
+	horiVisited[src.y][src.x].SetVisit(gem);
+
+	horiVisited[0][5].debug();
 
 	curTraversal.push_back(src);
 
 	bool isDeadEnd = true;
-	for (int i = 0; i<m_horiDirsToExamine.size(); i++)
+	for (int i = 0; i < m_horiDirsToExamine.size(); i++)
 	{
 		glm::vec2 dst = src + m_horiDirsToExamine[i];
 
@@ -164,25 +345,27 @@ void GameBoard::traverseHoriFromThisCell(glm::vec2 src, vector<glm::vec2>& curTr
 			continue;
 		}
 
-		visited[dst.y][dst.x].SetVisit(gem);
-
-
 		if (dst.x == 5 && dst.y == 0)
 		{
 			utl::debug("dst is ", dst);
 			Gem gem = board[dst.y][dst.x];
 
-			if (visited[dst.y][dst.x].hasVisited(gem))
+			if (horiVisited[dst.y][dst.x].hasVisited(gem))
 			{
 				cout << "I have visited " << dst.x << " " << dst.y << endl;
 			}
 
 		}
 
-		if (CanTraverseInThisDirection(src, dst) == true)
+		if (CanTraverseHoriInThisDirection(src, dst) == true)
 		{
+			horiVisited[dst.y][dst.x].SetVisit(gem);
 			traverseHoriFromThisCell(dst, curTraversal);
 			isDeadEnd = false;
+		}
+		else
+		{
+			horiVisited[dst.y][dst.x].SetVisit(gem);
 		}
 	}
 
@@ -194,37 +377,39 @@ void GameBoard::traverseHoriFromThisCell(glm::vec2 src, vector<glm::vec2>& curTr
 		}
 		cout << endl;
 	}
-
-	if (isDeadEnd)
-	{
-//		m_horiConnectedSequences.push_back(curTraversal);
-	}
-
 }
 
-/*
+
 void GameBoard::traverseVertFromThisCell(glm::vec2 src, vector<glm::vec2>& curTraversal)
 {
+	Gem gem = board[src.y][src.x];
+	vertVisited[src.y][src.x].SetVisit(gem);
 	curTraversal.push_back(src);
 
 	bool isDeadEnd = true;
-	for (int i = 0; i<m_vertDirsToExamine.size(); i++)
+	for (int i = 0; i < m_vertDirsToExamine.size(); i++)
 	{
 		glm::vec2 dst = src + m_vertDirsToExamine[i];
-		if (CanTraverseInThisDirection(src, dst) == true)
+
+		if (IsValidRange(dst) == false)
 		{
+			continue;
+		}
+
+
+		if (CanTraverseVertInThisDirection(src, dst) == true)
+		{
+			vertVisited[dst.y][dst.x].SetVisit(gem);
 			traverseVertFromThisCell(dst, curTraversal);
 			isDeadEnd = false;
 		}
+		else
+		{
+			vertVisited[dst.y][dst.x].SetVisit(gem);
+		}
 	}
-
-	if (isDeadEnd)
-	{
-		m_horiConnectedSequences.push_back(curTraversal);
-	}
-
 }
-*/
+
 
 
 /*
@@ -254,11 +439,30 @@ void GameBoard::traverseFromThisCell(glm::vec2 src, vector<glm::vec2>& curTraver
 
 bool GameBoard::CanStartHoriTraverseFrom(glm::vec2 src)
 {
+	Gem gem = board[src.y][src.x];
+
+	if (horiVisited[src.y][src.x].hasVisited(gem))	
+		return false;
+	
+	if (isInHoriSeq[src.y][src.x] == true)
+		return false;
+
 	return true;
 }
 
 bool GameBoard::CanStartVertTraverseFrom(glm::vec2 src)
 {
+	Gem gem = board[src.y][src.x];
+
+	if (vertVisited[src.y][src.x].hasVisited(gem))
+		return false;
+
+	if (isInVertSeq[src.y][src.x] == true)
+		return false;
+
+	return true;
+
+
 	return true;
 }
 
@@ -273,7 +477,7 @@ bool GameBoard::IsValidRange(glm::vec2 coord)
 }
 
 
-bool GameBoard::CanTraverseInThisDirection(glm::vec2 src, glm::vec2 dst)
+bool GameBoard::CanTraverseHoriInThisDirection(glm::vec2 src, glm::vec2 dst)
 {
 	if (IsValidRange(dst) == false)
 		return false;
@@ -283,9 +487,27 @@ bool GameBoard::CanTraverseInThisDirection(glm::vec2 src, glm::vec2 dst)
 
 	Gem dstGem = board[dst.y][dst.x];
 
-	if (visited[dst.y][dst.x].hasVisited(dstGem))
+	if (horiVisited[dst.y][dst.x].hasVisited(dstGem))
+	{		
+		return false;
+	}
+	return true;
+}
+
+
+
+bool GameBoard::CanTraverseVertInThisDirection(glm::vec2 src, glm::vec2 dst)
+{
+	if (IsValidRange(dst) == false)
+		return false;
+
+	if (board[dst.y][dst.x] != board[src.y][src.x])
+		return false;
+
+	Gem dstGem = board[dst.y][dst.x];
+
+	if (vertVisited[dst.y][dst.x].hasVisited(dstGem))
 	{
-		
 		return false;
 	}
 	return true;
@@ -301,9 +523,14 @@ int GameBoard::getHeight()
 	return board.size();
 }
 
-GameBoard::Gem GameBoard::getColor(int x, int y)
+GameBoard::Gem GameBoard::getGem(int x, int y)
 {
 	return board[y][x];
+}
+
+GameBoard::Gem GameBoard::getGem(glm::vec2 coord)
+{
+	return board[coord.y][coord.x];
 }
 
 
@@ -328,7 +555,8 @@ void GameBoard::resetFlags()
 	{
 		for (int x = 0; x < getWidth(); x++)
 		{			
-			visited[y][x].reset();
+			horiVisited[y][x].reset();
+			vertVisited[y][x].reset();
 			isInHoriSeq[y][x] = false;
 			isInVertSeq[y][x] = false;
 		}
@@ -403,7 +631,8 @@ void GameBoard::load(char* filename)
 	cout << w << " " << h << endl;
 
 	vector<vector<Gem>> newBoard;
-	vector<vector<VisitedFlags>> newVisited;
+	vector<vector<VisitedFlags>> newHoriVisited;
+	vector<vector<VisitedFlags>> newVertVisited;
 	vector<vector<bool>> newHoriFlags;
 	vector<vector<bool>> newVertFlags;
 
@@ -420,8 +649,8 @@ void GameBoard::load(char* filename)
 			booleanRow[i] = VisitedFlags((int)Gem::NUM_TYPES);
 		}
 
-		newVisited.push_back(booleanRow);
-
+		newHoriVisited.push_back(booleanRow);
+		newVertVisited.push_back(booleanRow);
 		vector<bool> vertRow(w);
 		vector<bool> horiRow(w);
 
@@ -456,10 +685,24 @@ void GameBoard::load(char* filename)
 	cout << "end newBoard" << endl;
 	*/
 	board = newBoard;
-	visited = newVisited;
+	horiVisited = newHoriVisited;
+	vertVisited = newVertVisited;
 	isInHoriSeq = newHoriFlags;
 	isInVertSeq = newVertFlags;
 
 //	debug();
 }
+
+
+void GameBoard::debugVisitedFlags()
+{
+	for (int y = 0; y < getHeight(); y++)
+	{
+		for (int x = 0; x < getWidth(); x++)
+		{
+			horiVisited[y][x].debug();
+		}
+	}
+}
+
 

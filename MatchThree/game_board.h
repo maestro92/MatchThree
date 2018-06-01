@@ -100,13 +100,14 @@ class GameBoard
 				{
 					if (flags[i] == true)
 					{
-						cout << "T" << " ";
+						cout << "T";
 					}
 					else
 					{
-						cout << "F" << " ";
+						cout << "F";
 					}
 				}
+				cout << " ";
 
 			}
 		};
@@ -131,17 +132,37 @@ class GameBoard
 		void init(int w, int h);
 
 		void findMatches();
+		void findPotentialMatches();
+
+		vector<vector<glm::vec2>> findPotentialHoriMatches();
+		vector<vector<glm::vec2>> findPotentialVertMatches();
+
+		void findPotMatchHori0(vector<glm::vec2> seq);
+		void findPotMatchHori1(vector<glm::vec2> seq);
+		void findPotMatchHori2(vector<glm::vec2> seq);
+
+		void findPotMatchVert0(vector<glm::vec2> seq);
+		void findPotMatchVert1(vector<glm::vec2> seq);
+		void findPotMatchVert2(vector<glm::vec2> seq);
+
+		vector<glm::vec2> checkVert0(glm::vec2 coord0);
+		vector<glm::vec2> checkVert1(glm::vec2 coord0);
+		vector<glm::vec2> checkVert2(glm::vec2 coord0);
+
 
 		void debug();
 		
 		int getWidth();
 		int getHeight();
 
-		Gem getColor(int x, int y);
+		Gem getGem(glm::vec2 coord);
+		Gem getGem(int x, int y);
 
 		void save();
 		void load(char* filename);
 		void reset();
+
+		void debugVisitedFlags();
 
 		void resetFlags();
 
@@ -155,10 +176,8 @@ class GameBoard
 		Object serializeGem(GameBoard::Gem gem);
 		GameBoard::Gem deserializeGem(const mObject& obj);
 
-		// void traverseFromThisCell(glm::vec2 src, vector<glm::vec2>& curTraversal);
-		bool CanTraverseInThisDirection(glm::vec2 src, glm::vec2 dst);
-		// bool CanStartTraverseFrom(glm::vec2 src);
-
+		bool CanTraverseHoriInThisDirection(glm::vec2 src, glm::vec2 dst);
+		bool CanTraverseVertInThisDirection(glm::vec2 src, glm::vec2 dst);
 
 		void traverseHoriFromThisCell(glm::vec2 src, vector<glm::vec2>& curTraversal);
 		void traverseVertFromThisCell(glm::vec2 src, vector<glm::vec2>& curTraversal);
@@ -170,16 +189,19 @@ class GameBoard
 		vector<vector<glm::vec2>> m_horiConnectedSequences;
 		vector<vector<glm::vec2>> m_vertConnectedSequences;
 
+		vector<vector<glm::vec2>> m_potentialMatches;
+
 		bool IsValidRange(glm::vec2 coord);
 
 		vector<vector<glm::vec2>> m_matches;
-	//	vector<glm::vec2> m_dirsToExamine;
+	
 		vector<glm::vec2> m_vertDirsToExamine;
 		vector<glm::vec2> m_horiDirsToExamine;
 
 		
 		vector<vector<Gem>> board;
-		vector<vector<VisitedFlags>> visited;
+		vector<vector<VisitedFlags>> horiVisited;
+		vector<vector<VisitedFlags>> vertVisited;
 
 		vector<vector<bool>> isInHoriSeq;
 		vector<vector<bool>> isInVertSeq;
