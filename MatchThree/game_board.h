@@ -120,22 +120,25 @@ class GameBoard
 			}
 		};
 
-		/*
-		bool vertSeqComparator(glm::vec2 i, glm::vec2 j)
+		struct vertSeqComparator
 		{
-			return i.y < j.y;
-		}
-		*/
+			inline bool operator() (const glm::vec2& i, const glm::vec2& j)
+			{
+				return i.y < j.y;
+			}
+		};
 
 		GameBoard();
+		horiSeqComparator horiSeqComp;
+		vertSeqComparator vertSeqComp;
 
 		void init(int w, int h);
 
 		void findMatches();
 		void findPotentialMatches();
 
-		vector<vector<glm::vec2>> findPotentialHoriMatches();
-		vector<vector<glm::vec2>> findPotentialVertMatches();
+		void findPotentialHoriMatches();
+		void findPotentialVertMatches();
 
 		void findPotMatchHori0(vector<glm::vec2> seq);
 		void findPotMatchHori1(vector<glm::vec2> seq);
@@ -144,11 +147,6 @@ class GameBoard
 		void findPotMatchVert0(vector<glm::vec2> seq);
 		void findPotMatchVert1(vector<glm::vec2> seq);
 		void findPotMatchVert2(vector<glm::vec2> seq);
-
-		vector<glm::vec2> checkVert0(glm::vec2 coord0);
-		vector<glm::vec2> checkVert1(glm::vec2 coord0);
-		vector<glm::vec2> checkVert2(glm::vec2 coord0);
-
 
 		void debug();
 		

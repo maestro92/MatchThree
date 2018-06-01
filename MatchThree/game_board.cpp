@@ -97,6 +97,8 @@ void GameBoard::findMatches()
 
 				if (curTraversal.size() > 1)
 				{
+					// sort in increasing x coord
+					sort(curTraversal.begin(), curTraversal.end(), horiSeqComp);
 					m_horiConnectedSequences.push_back(curTraversal);
 				}
 			}
@@ -108,6 +110,8 @@ void GameBoard::findMatches()
 
 				if (curTraversal.size() > 1)
 				{
+					// sort in increasing y coord
+					sort(curTraversal.begin(), curTraversal.end(), vertSeqComp);
 					m_vertConnectedSequences.push_back(curTraversal);
 				}
 			}			
@@ -115,6 +119,21 @@ void GameBoard::findMatches()
 	}
 
 	debugConnectedSequences();
+
+	findPotentialMatches();
+
+	cout << endl << endl;
+	cout << "Printing potential matches" << endl;
+	for (int y = 0; y < m_potentialMatches.size(); y++)
+	{
+		for (int x = 0; x < m_potentialMatches[y].size(); x++)
+		{
+			cout << m_potentialMatches[y][x].x << " " << m_potentialMatches[y][x].y << ", ";
+		}
+		cout << endl;
+	}
+
+
 }
 
 
@@ -127,14 +146,8 @@ void GameBoard::findPotentialMatches()
 	// in that case, I just need to loop through the connected sequence and check for potential matches instead of iterating
 	// thru every cell
 
-	findPotentialHoriMatches();
-	findPotentialVertMatches();
-}
+	m_potentialMatches.clear();
 
-
-
-vector<vector<glm::vec2>> GameBoard::findPotentialHoriMatches()
-{
 	for (int i = 0; i < m_horiConnectedSequences.size(); i++)
 	{
 		// this is assuming horiConnectedSeq goes from small x to large x
@@ -145,6 +158,7 @@ vector<vector<glm::vec2>> GameBoard::findPotentialHoriMatches()
 		findPotMatchHori2(seq);
 	}
 
+
 	for (int i = 0; i < m_vertConnectedSequences.size(); i++)
 	{
 		// this is assuming horiConnectedSeq goes from small x to large x
@@ -154,10 +168,17 @@ vector<vector<glm::vec2>> GameBoard::findPotentialHoriMatches()
 		findPotMatchVert1(seq);
 		findPotMatchVert2(seq);
 	}
+}
+
+
+
+void GameBoard::findPotentialHoriMatches()
+{
+
 
 }
 
-vector<vector<glm::vec2>> GameBoard::findPotentialVertMatches()
+void GameBoard::findPotentialVertMatches()
 {
 
 }
@@ -194,11 +215,10 @@ void GameBoard::findPotMatchHori0(vector<glm::vec2> seq)
 	* & & * *
 	& * * * *
 	\* example  */
-
 	glm::vec2 coord0 = seq[0];
 	glm::vec2 coord1(coord0.x - 1, coord0.y - 1);
 
-	if (IsValidRange(coord1))
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
 	{		
 		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
 		m_potentialMatches.push_back(potMatch);
@@ -214,7 +234,7 @@ void GameBoard::findPotMatchHori0(vector<glm::vec2> seq)
 	\* example  */
 
 	glm::vec2 coord2(coord0.x - 1, coord0.y + 1);
-	if (IsValidRange(coord1))
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
 	{
 		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
 		m_potentialMatches.push_back(potMatch);
@@ -234,7 +254,7 @@ void GameBoard::findPotMatchHori1(vector<glm::vec2> seq)
 	glm::vec2 coord0 = seq[seq.size()-1];
 	glm::vec2 coord1(coord0.x + 1, coord0.y - 1);
 
-	if (IsValidRange(coord1))
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
 	{
 		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
 		m_potentialMatches.push_back(potMatch);
@@ -250,7 +270,7 @@ void GameBoard::findPotMatchHori1(vector<glm::vec2> seq)
 	\* example  */
 
 	coord1 = glm::vec2(coord0.x + 1, coord0.y + 1);
-	if (IsValidRange(coord1))
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
 	{
 		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
 		m_potentialMatches.push_back(potMatch);
@@ -289,31 +309,119 @@ void GameBoard::findPotMatchHori2(vector<glm::vec2> seq)
 	coord0 = seq[seq.size() - 1];
 	coord1 = glm::vec2(coord0.x + 2, coord0.y);
 
-	if (IsValidRange(coord1))
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
 	{
 		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
 		m_potentialMatches.push_back(potMatch);
 	}
 }
 
-vector<glm::vec2> GameBoard::checkHori2(int x, int y)
+void GameBoard::findPotMatchVert0(vector<glm::vec2> seq)
 {
+	/* example *\
+	* * * * *
+	* * * * *
+	* & * * *
+	* & * * *
+	& * * * *
+	\* example  */
+	glm::vec2 coord0 = seq[0];
+	glm::vec2 coord1(coord0.x - 1, coord0.y - 1);
+
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
+
+
+	/* example *\
+	* * * * *
+	* * * * *
+	* & * * *
+	* & * * *
+	* * & * *
+	\* example  */
+	coord0 = seq[0];
+	coord1 = glm::vec2(coord0.x + 1, coord0.y - 1);
+
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
 
 }
 
-vector<glm::vec2> GameBoard::checkVert0(int x, int y)
+void GameBoard::findPotMatchVert1(vector<glm::vec2> seq)
 {
+	/* example *\
+	* * * * *
+	& * * * *
+	* & * * *
+	* & * * *
+	* * * * *
+	\* example  */
+	glm::vec2 coord0 = seq[seq.size() - 1];
+	glm::vec2 coord1(coord0.x - 1, coord0.y + 1);
 
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
+
+	/* example *\
+	* * * * *
+	* * & * *
+	* & * * *
+	* & * * *
+	* * * * *
+	\* example  */
+	coord0 = seq[seq.size() - 1];
+	coord1 = glm::vec2(coord0.x + 1, coord0.y + 1);
+
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
 }
 
-vector<glm::vec2> GameBoard::checkVert1(int x, int y)
+void GameBoard::findPotMatchVert2(vector<glm::vec2> seq)
 {
+	/* example *\
+	* & * * *
+	* * * * *
+	* & * * *
+	* & * * *
+	* * * * *
+	\* example  */
+	glm::vec2 coord0 = seq[seq.size() - 1];
+	glm::vec2 coord1(coord0.x, coord0.y + 2);
 
-}
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, false);
+		m_potentialMatches.push_back(potMatch);
+	}
 
-vector<glm::vec2> GameBoard::checkVert2(int x, int y)
-{
 
+	/* example *\
+	* * * * *
+	* & * * *
+	* & * * *
+	* * * * *
+	* & * * *
+	\* example  */
+	coord0 = seq[0];
+	coord1 = glm::vec2(coord0.x, coord0.y - 2);
+
+	if (IsValidRange(coord1) && getGem(coord0) == getGem(coord1))
+	{
+		vector<glm::vec2> potMatch = buildPotMatchSeq(coord1, seq, true);
+		m_potentialMatches.push_back(potMatch);
+	}
 }
 
 

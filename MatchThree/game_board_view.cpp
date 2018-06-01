@@ -61,7 +61,7 @@ void GameBoardView::render(Pipeline& p, GameBoard* gameBoard)
 		for (int x = 0; x < gameBoard->getWidth(); x++)
 		{
 			glm::vec3 color;
-			switch (gameBoard->getColor(x,y))
+			switch (gameBoard->getGem(x,y))
 			{
 				case GameBoard::Gem::Red:
 					color = COLOR_RED;
